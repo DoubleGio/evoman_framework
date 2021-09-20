@@ -178,13 +178,14 @@ def evaluate(x):
 
 # tournament
 def tournament(pop, fit_pop):
-    c1 = np.random.randint(0, pop.shape[0], 1)
-    c2 = np.random.randint(0, pop.shape[0], 1)
+    n_options = 2 if pop.shape[0] < 3 else pop.shape[0] // 2  # N possible parents = 10% of pop or 2
 
-    if fit_pop[c1] > fit_pop[c2]:
-        return pop[c1][0]
-    else:
-        return pop[c2][0]
+    i_options = np.random.randint(0, pop.shape[0], n_options)  # get indices of random options
+    fit_options = fit_pop.take(i_options)  # get fitness of these options
+    options = np.vstack((i_options, fit_options))  # add to one matrix
+
+    i_parents = np.flip(options[:, options[1].argsort()], 1)[0, 0:2]  # sort this matrix on fitness, select best two
+    return pop[int(i_parents[0])], pop[int(i_parents[1])]  # return the two best parents
 
 
 # limits
@@ -202,23 +203,24 @@ def crossover(pop, fit_pop):
     total_offspring = np.zeros((0, n_vars))
 
     for p in range(0, pop.shape[0], 2):
-        p1 = tournament(pop, fit_pop)
-        p2 = tournament(pop, fit_pop)
+        p1, p2 = tournament(pop, fit_pop)
 
-        n_offspring = np.random.randint(1, 4, 1)[0]
+        # n_offspring = np.random.randint(1, 4, 1)[0]
+        n_offspring = 2
         offspring = np.zeros((n_offspring, n_vars))
 
         for f in range(0, n_offspring):
 
-            cross_prop = np.random.uniform(0, 1)
-            offspring[f] = p1 * cross_prop + p2 * (1 - cross_prop)
+            cross_prop = np.random.uniform(0, 1)  # proportion of p1 that gets to cross over
+            cross_mask = np.random.choice([True, False], size=n_vars, p=[cross_prop, 1 - cross_prop])
+            offspring[f] = np.where(cross_mask, p1, p2)  # where mask = True, insert value from p1, else insert p2
 
             # mutation
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
-                    offspring[f][i] = offspring[f][i] + np.random.normal(0, 1)
-
-            offspring[f] = np.array(list(map(lambda y: limits(y), offspring[f])))
+                    # offspring[f][i] = offspring[f][i] + np.random.normal(0, 1)  # non-uniform mutation
+                    offspring[f][i] = np.random.uniform(DOM_L, DOM_U)   # uniform mutation
+            # offspring[f] = np.array(list(map(lambda y: limits(y), offspring[f]))) # unnecessary for uniform mutation
 
             total_offspring = np.vstack((total_offspring, offspring[f]))
 
