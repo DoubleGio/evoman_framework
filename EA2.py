@@ -112,7 +112,7 @@ def crossover(pop):
         n_offspring = 3
         offspring = np.zeros((n_offspring, n_vars))
 
-        for f in range(0, n_offspring):
+        for f in range(0, n_offspring,2):
 
             # cross_prop = np.random.uniform(0,1)
             # offspring[f] = p1*cross_prop+p2*(1-cross_prop)
