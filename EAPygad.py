@@ -6,8 +6,9 @@
 ###############################################################################
 
 # imports framework
-import pygad
 import sys
+import pygad
+
 sys.path.insert(0, 'evoman')
 from environment import Environment
 from demo_controller import player_controller
@@ -25,7 +26,7 @@ if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
-experiment_name = 'individual_demo_uniform_crossovergoed100_parents3_2'
+experiment_name = 'Pygad9'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -40,6 +41,17 @@ env = Environment(experiment_name=experiment_name,
                   level=2,
                   speed="fastest")
 
+run_mode = 'train' # train or test
+
+if run_mode =='test':
+
+    bsol = np.loadtxt(experiment_name+'/best.txt')
+    print( '\n RUNNING SAVED BEST SOLUTION \n')
+    env.update_parameter('speed','normal')
+    env.play(bsol)
+
+    sys.exit(0)
+
 # default environment fitness is assumed for experiment
 
 env.state_to_log() # checks environment state
@@ -49,36 +61,54 @@ env.state_to_log() # checks environment state
 
 ini = time.time()  # sets time marker
 
-
-# genetic algorithm params
-
 # number of weights for multilayer with 10 hidden neurons
 n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
+dom_u = 1
+dom_l = -1
 
-num_generations = 50
+#first inputs, randomly chosen
+function_inputs = np.random.uniform(dom_l, dom_u, n_vars)
+
+#implement fitness function
+def on_generation(ga):
+    file_aux = open(experiment_name + '/results.txt', 'a')
+    generation = ga.generations_completed
+    print("Generation", generation)
+    fitness = ga_instance.last_generation_fitness
+    mean = str(np.mean(fitness))
+    std = str(np.std(fitness))
+    max = str(np.max(fitness))
+    file_aux.write('\n' + str(generation) + ' ' + mean + ' ' + std + ' ' + max)
+    print("MEAN = " + mean)
+    print("STD = " + std)
+    print("MAX = " + max)
+
+def fitness_function(solution, solution_idx):
+    output = solution*function_inputs
+    fitness,p,e,t = env.play(output)
+    return fitness
+
+num_generations = 25
 num_parents_mating = 4
 
-sol_per_pop = 8
-num_genes = len(n_vars)
+sol_per_pop = 80
+num_genes = len(function_inputs)
 
 init_range_low = -2
 init_range_high = 5
 
-parent_selection_type = "sss"
+parent_selection_type = "sus"
 keep_parents = 1
-crossover_type = "single_point"
-mutation_type = "random"
+
+crossover_type = "scattered"
+
+mutation_type = "swap"
 mutation_percent_genes = 10
-
-
-def fitness_func(x,y):
-    f,p,e,t = env.play(pcont=x)
-    return f
 
 ga_instance = pygad.GA(num_generations=num_generations,
                        num_parents_mating=num_parents_mating,
-                       fitness_func=fitness_func,
+                       fitness_func=fitness_function,
                        sol_per_pop=sol_per_pop,
                        num_genes=num_genes,
                        init_range_low=init_range_low,
@@ -87,45 +117,17 @@ ga_instance = pygad.GA(num_generations=num_generations,
                        keep_parents=keep_parents,
                        crossover_type=crossover_type,
                        mutation_type=mutation_type,
-                       mutation_percent_genes=mutation_percent_genes)
+                       mutation_percent_genes=mutation_percent_genes,
+                       on_generation=on_generation
+                       )
 
-# runs simulation
 ga_instance.run()
+
+
+
 solution, solution_fitness, solution_idx = ga_instance.best_solution()
 print("Parameters of the best solution : {solution}".format(solution=solution))
+np.savetxt(experiment_name+'/best.txt', solution)
 print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=solution_fitness))
-
-#prediction = np.sum(np.array(function_inputs)*solution)
+prediction = np.sum(np.array(function_inputs)*solution)
 print("Predicted output based on the best solution : {prediction}".format(prediction=prediction))
-
-def saveresults():# saves results
-    file_aux  = open(experiment_name+'/results.txt','a')
-    print( '\n GENERATION '+str(i)+' '+str(round(fit_pop[best],6))+' '+str(round(mean,6))+' '+str(round(std,6)))
-    file_aux.write('\n'+str(i)+' '+str(round(fit_pop[best],6))+' '+str(round(mean,6))+' '+str(round(std,6))   )
-    file_aux.close()
-
-    # saves generation number
-    file_aux  = open(experiment_name+'/gen.txt','w')
-    file_aux.write(str(i))
-    file_aux.close()
-
-    # saves file with the best solution
-    np.savetxt(experiment_name+'/best.txt',pop[best])
-
-    # saves simulation state
-    solutions = [pop, fit_pop]
-    env.update_solutions(solutions)
-    env.save_state()
-
-
-
-
-fim = time.time() # prints total execution time for experiment
-print( '\nExecution time: '+str(round((fim-ini)/60))+' minutes \n')
-
-
-file = open(experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
-file.close()
-
-
-env.state_to_log() # checks environment state
