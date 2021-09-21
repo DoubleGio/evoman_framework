@@ -24,7 +24,7 @@ if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
-experiment_name = 'individual_demo'
+experiment_name = 'control_run5'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -51,7 +51,7 @@ ini = time.time()  # sets time marker
 
 # genetic algorithm params
 
-run_mode = 'train' # train or test
+run_mode = 'test' # train or test
 
 # number of weights for multilayer with 10 hidden neurons
 n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
@@ -61,12 +61,13 @@ dom_u = 1
 dom_l = -1
 npop = 100
 gens = 30
-mutation = 0.2
+mutation = 0.35
 last_best = 0
 
 
 # runs simulation
 def simulation(env,x):
+
     f,p,e,t = env.play(pcont=x)
     return f
 
@@ -85,19 +86,29 @@ def norm(x, pfit_pop):
 
 # evaluation
 def evaluate(x):
-    return np.array(list(map(lambda y: simulation(env,y), x)))
+    iets = np.array(list(map(lambda y: simulation(env,y), x)))
 
+    return iets
 
 # tournament
 def tournament(pop):
-    c1 =  np.random.randint(0,pop.shape[0], 1)
-    c2 =  np.random.randint(0,pop.shape[0], 1)
+    array = np.zeros(10)
+    for i in range(len(array)-1):
+        array[i] = np.random.randint(0, pop.shape[0], 1)
+    best = 0
 
-    if fit_pop[c1] > fit_pop[c2]:
-        return pop[c1][0]
-    else:
-        return pop[c2][0]
+    for j in range(len(array)-1):
+        if fit_pop[j] > fit_pop[j+1]:
+            best = pop[i]
 
+    return best
+#    c1 = np.random.randint(0, pop.shape[0], 1)
+#    c2 = np.random.randint(0, pop.shape[0], 1)
+
+#    if fit_pop[c1] > fit_pop[c2]:
+#        return pop[c1][0]
+#    else:
+#        return pop[c2][0]
 
 # limits
 def limits(x):
@@ -120,16 +131,21 @@ def crossover(pop):
         p1 = tournament(pop)
         p2 = tournament(pop)
 
+
         n_offspring =   np.random.randint(1,3+1, 1)[0]
         offspring =  np.zeros( (n_offspring, n_vars) )
 
         for f in range(0,n_offspring):
 
-            cross_prop = np.random.uniform(0,1)
-            offspring[f] = p1*cross_prop+p2*(1-cross_prop)
 
-            # mutation
             for i in range(0,len(offspring[f])):
+                #crossover
+                pop_cross = np.random.uniform(0,1)
+                if pop_cross < 0.5:
+                    offspring[f][i] = p1[i]
+                else:
+                    offspring[f][i] = p2[i]
+                #mutation
                 if np.random.uniform(0 ,1)<=mutation:
                     offspring[f][i] =   offspring[f][i]+np.random.normal(0, 1)
 
@@ -289,7 +305,7 @@ fim = time.time() # prints total execution time for experiment
 print( '\nExecution time: '+str(round((fim-ini)/60))+' minutes \n')
 
 
-file = open(experiment_name+'/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
+file = open(experiment_name+'/neuroended', 'w')  # saves  (simulation has ended) file for bash loop file
 file.close()
 
 
