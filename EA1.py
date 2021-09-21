@@ -178,14 +178,14 @@ def evaluate(x):
 
 # tournament
 def tournament(pop, fit_pop):
-    n_options = 2 if pop.shape[0] < 3 else pop.shape[0] // 2  # N possible parents = 10% of pop or 2
-
+    # n_options = 2 if pop.shape[0] < 3 else pop.shape[0] // 2  # N possible parents = 10% of pop or 2
+    n_options = 6
     i_options = np.random.randint(0, pop.shape[0], n_options)  # get indices of random options
     fit_options = fit_pop.take(i_options)  # get fitness of these options
     options = np.vstack((i_options, fit_options))  # add to one matrix
 
-    i_parents = np.flip(options[:, options[1].argsort()], 1)[0, 0:2]  # sort this matrix on fitness, select best two
-    return pop[int(i_parents[0])], pop[int(i_parents[1])]  # return the two best parents
+    i_parents = np.flip(options[:, options[1].argsort()], 1)[0, 0:3]  # sort this matrix on fitness, select best two
+    return pop[int(i_parents[0])], pop[int(i_parents[1])], pop[int(i_parents[2])]  # return the two best parents
 
 
 # limits
@@ -203,7 +203,7 @@ def crossover(pop, fit_pop):
     total_offspring = np.zeros((0, n_vars))
 
     for p in range(0, pop.shape[0], 2):
-        p1, p2 = tournament(pop, fit_pop)
+        p1, p2, p3 = tournament(pop, fit_pop)
 
         # n_offspring = np.random.randint(1, 4, 1)[0]
         n_offspring = 2

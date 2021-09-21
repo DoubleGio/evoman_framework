@@ -24,7 +24,7 @@ if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
-experiment_name = 'individual_demo'
+experiment_name = 'individual_demo_uniform_crossovergoed100_parents3_2'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -59,7 +59,7 @@ n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
 dom_u = 1
 dom_l = -1
-npop = 10
+npop = 100
 gens = 30
 mutation = 0.2
 last_best = 0
@@ -90,13 +90,20 @@ def evaluate(x):
 
 # tournament
 def tournament(pop):
-    c1 =  np.random.randint(0,pop.shape[0], 1)
-    c2 =  np.random.randint(0,pop.shape[0], 1)
+    array = []
+    for i in range(2):
+        array.append(np.random.randint(0,pop.shape[0], 1))
+    best = 0
+    total = 0
 
-    if fit_pop[c1] > fit_pop[c2]:
-        return pop[c1][0]
-    else:
-        return pop[c2][0]
+    for i in array:
+        if(total != len(array)):
+            return best
+        elif (fit_pop[i] > fit_pop[i+1]):
+            best = fit_pop[i][0]
+        total = total + 1
+    return best
+
 
 
 # limits
@@ -119,17 +126,26 @@ def crossover(pop):
     for p in range(0,pop.shape[0], 2):
         p1 = tournament(pop)
         p2 = tournament(pop)
+        p3 = tournament(pop)
 
-        n_offspring =   np.random.randint(1,3+1, 1)[0]
-        offspring =  np.zeros( (n_offspring, n_vars) )
+        n_offspring = np.random.randint(1,3+1, 1)[0]
+        offspring = np.zeros( (n_offspring, n_vars))
 
         for f in range(0,n_offspring):
 
-            cross_prop = np.random.uniform(0,1)
-            offspring[f] = p1*cross_prop+p2*(1-cross_prop)
+            #cross_prop = np.random.uniform(0,1)
+            #offspring[f] = p1*cross_prop+p2*(1-cross_prop)
 
             # mutation
             for i in range(0,len(offspring[f])):
+                cross_prop = np.random.randint(0, 2)
+                if (cross_prop == 0):
+                    offspring[f][i] = p1
+                elif (cross_prop == 1):
+                    offspring[f][i] = p2
+                else:
+                    offspring[f][i] = p3
+
                 if np.random.uniform(0 ,1)<=mutation:
                     offspring[f][i] =   offspring[f][i]+np.random.normal(0, 1)
 
