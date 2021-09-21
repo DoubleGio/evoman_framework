@@ -24,7 +24,7 @@ if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
-experiment_name = 'individual_demo_uniform_crossovergoed100_parents3_2'
+experiment_name = 'test1'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -32,7 +32,7 @@ n_hidden_neurons = 10
 
 # initializes simulation in individual evolution mode, for single static enemy.
 env = Environment(experiment_name=experiment_name,
-                  enemies=[2],
+                  enemies=[3],
                   playermode="ai",
                   player_controller=player_controller(n_hidden_neurons),
                   enemymode="static",
@@ -61,7 +61,7 @@ dom_u = 1
 dom_l = -1
 npop = 100
 gens = 30
-mutation = 0.2
+mutation = 0.1
 last_best = 0
 
 
@@ -70,17 +70,11 @@ def simulation(env,x):
     f,p,e,t = env.play(pcont=x)
     return f
 
-# normalizes
-def norm(x, pfit_pop):
-
-    if ( max(pfit_pop) - min(pfit_pop) ) > 0:
-        x_norm = ( x - min(pfit_pop) )/( max(pfit_pop) - min(pfit_pop) )
-    else:
-        x_norm = 0
-
-    if x_norm <= 0:
-        x_norm = 0.0000000001
-    return x_norm
+# min-max normalization
+def minmax_norm(arr):
+    min_x = min(arr)
+    max_x = max(arr)
+    return np.array(list(map(lambda y: (y - min_x) / (max_x - min_x), arr)))
 
 
 # evaluation
@@ -90,21 +84,14 @@ def evaluate(x):
 
 # tournament
 def tournament(pop):
-    array = []
-    for i in range(2):
-        array.append(np.random.randint(0,pop.shape[0], 1))
-    best = 0
-    total = 0
+    # n_options = 2 if pop.shape[0] < 3 else pop.shape[0] // 2  # N possible parents = 10% of pop or 2
+    n_options = 6
+    i_options = np.random.randint(0, pop.shape[0], n_options)  # get indices of random options
+    fit_options = fit_pop.take(i_options)  # get fitness of these options
+    options = np.vstack((i_options, fit_options))  # add to one matrix
 
-    for i in array:
-        if(total != len(array)):
-            return best
-        elif (fit_pop[i] > fit_pop[i+1]):
-            best = fit_pop[i][0]
-        total = total + 1
-    return best
-
-
+    i_parents = np.flip(options[:, options[1].argsort()], 1)[0, 0:3]  # sort this matrix on fitness, select best two
+    return pop[int(i_parents[0])], pop[int(i_parents[1])], pop[int(i_parents[2])]  # return the two best parents
 
 # limits
 def limits(x):
@@ -123,33 +110,27 @@ def crossover(pop):
     total_offspring = np.zeros((0,n_vars))
 
 
-    for p in range(0,pop.shape[0], 2):
-        p1 = tournament(pop)
-        p2 = tournament(pop)
-        p3 = tournament(pop)
+    for p in range(0,pop.shape[0], 3):
+        p1, p2, p3 = tournament(pop)
 
-        n_offspring = np.random.randint(1,3+1, 1)[0]
+        # n_offspring = np.random.randint(1,3+1, 1)[0]
+        n_offspring = 3
         offspring = np.zeros( (n_offspring, n_vars))
 
         for f in range(0,n_offspring):
 
             #cross_prop = np.random.uniform(0,1)
             #offspring[f] = p1*cross_prop+p2*(1-cross_prop)
-
+            cross_mask = np.random.choice([0, 1, 2], size=n_vars)
+            offspring[f] = np.where(cross_mask == 0, p1, 0)  # where mask = True, insert value from p1, else insert p2
+            offspring[f] = np.where(cross_mask == 1, p2, p3)
             # mutation
             for i in range(0,len(offspring[f])):
-                cross_prop = np.random.randint(0, 2)
-                if (cross_prop == 0):
-                    offspring[f][i] = p1
-                elif (cross_prop == 1):
-                    offspring[f][i] = p2
-                else:
-                    offspring[f][i] = p3
+                 if np.random.uniform(0 ,1)<=mutation:
+                    # offspring[f][i] = offspring[f][i]+np.random.normal(0, 1)
+                    offspring[f][i] = np.random.uniform(dom_l, dom_u)
 
-                if np.random.uniform(0 ,1)<=mutation:
-                    offspring[f][i] =   offspring[f][i]+np.random.normal(0, 1)
-
-            offspring[f] = np.array(list(map(lambda y: limits(y), offspring[f])))
+            #offspring[f] = np.array(list(map(lambda y: limits(y), offspring[f])))
 
             total_offspring = np.vstack((total_offspring, offspring[f]))
 
@@ -159,18 +140,13 @@ def crossover(pop):
 # kills the worst genomes, and replace with new best/random solutions
 def doomsday(pop,fit_pop):
 
-    worst = int(npop/4)  # a quarter of the population
+    worst = int(npop/5)  # a fifth of the population
     order = np.argsort(fit_pop)
     orderasc = order[0:worst]
 
     for o in orderasc:
         for j in range(0,n_vars):
-            pro = np.random.uniform(0,1)
-            if np.random.uniform(0,1)  <= pro:
-                pop[o][j] = np.random.uniform(dom_l, dom_u) # random dna, uniform dist.
-            else:
-                pop[o][j] = pop[order[-1:]][0][j] # dna from best
-
+            pop[o][j] = np.random.uniform(dom_l, dom_u) # random dna, uniform dist.
         fit_pop[o]=evaluate([pop[o]])
 
     return pop,fit_pop
@@ -240,6 +216,12 @@ for i in range(ini_g+1, gens):
 
     offspring = crossover(pop)  # crossover
     fit_offspring = evaluate(offspring)   # evaluation
+
+    order = np.argsort(fit_pop)
+    deaths = order[0:int(npop/2)]
+    fit_pop = np.delete(fit_pop,deaths)
+    pop = np.delete(pop,deaths,axis=0)
+
     pop = np.vstack((pop,offspring))
     fit_pop = np.append(fit_pop,fit_offspring)
 
@@ -248,11 +230,18 @@ for i in range(ini_g+1, gens):
     best_sol = fit_pop[best]
 
     # selection
-    fit_pop_cp = fit_pop
-    fit_pop_norm =  np.array(list(map(lambda y: norm(y,fit_pop_cp), fit_pop))) # avoiding negative probabilities, as fitness is ranges from negative numbers
-    probs = (fit_pop_norm)/(fit_pop_norm).sum()
+    # fit_pop_cp = fit_pop
+    # fit_pop_norm =  np.array(list(map(lambda y: norm(y,fit_pop_cp), fit_pop))) # avoiding negative probabilities, as fitness is ranges from negative numbers
+    # fit_pop_norm = minmax_norm(fit_pop)
+
+    ranking = np.argsort(fit_pop)
+    ranked_pop = pop[ranking]
+    indices = np.arange(0,pop.shape[0])
+    s = 2
+    probs = ((2-s)/pop.shape[0]) + (2*indices*(s-1))/(pop.shape[0] * (pop.shape[0] - 1))
+    #probs = (fit_pop_norm)/(fit_pop_norm).sum()
     chosen = np.random.choice(pop.shape[0], npop , p=probs, replace=False)
-    chosen = np.append(chosen[1:],best)
+    #chosen = np.append(chosen[1:],best)
     pop = pop[chosen]
     fit_pop = fit_pop[chosen]
 
@@ -265,7 +254,7 @@ for i in range(ini_g+1, gens):
         last_sol = best_sol
         notimproved = 0
 
-    if notimproved >= 15:
+    if notimproved >= 10:
 
         file_aux  = open(experiment_name+'/results.txt','a')
         file_aux.write('\ndoomsday')
