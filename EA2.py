@@ -23,7 +23,7 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'enemy2_test5_gio'
+experiment_name = 'enemy1_test2_gio'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -31,7 +31,7 @@ n_hidden_neurons = 10
 
 # initializes simulation in individual evolution mode, for single static enemy.
 env = Environment(experiment_name=experiment_name,
-                  enemies=[2],
+                  enemies=[1],
                   playermode="ai",
                   player_controller=player_controller(n_hidden_neurons),
                   enemymode="static",
@@ -105,11 +105,11 @@ def limits(x):
 def crossover(pop):
     total_offspring = np.zeros((0, n_vars))
 
-    for p in range(0, pop.shape[0], 2):
+    for p in range(0, pop.shape[0]):
         p1, p2, p3 = tournament(pop)
 
         # n_offspring = np.random.randint(1,3+1, 1)[0]
-        n_offspring = 3
+        n_offspring = 2
         offspring = np.zeros((n_offspring, n_vars))
 
         for f in range(0, n_offspring):
