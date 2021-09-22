@@ -23,7 +23,7 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'enemy1_test2_gio'
+experiment_name = 'enemyx_test1_gio'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -55,7 +55,7 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 
 dom_u = 1
 dom_l = -1
-npop = 80
+npop = 40
 gens = 25
 mutation = 0.1
 last_best = 0
@@ -105,11 +105,9 @@ def limits(x):
 def crossover(pop):
     total_offspring = np.zeros((0, n_vars))
 
-    for p in range(0, pop.shape[0]):
+    for p in range(0, pop.shape[0], 2):
         p1, p2, p3 = tournament(pop)
-
-        # n_offspring = np.random.randint(1,3+1, 1)[0]
-        n_offspring = 2
+        n_offspring = 3
         offspring = np.zeros((n_offspring, n_vars))
 
         for f in range(0, n_offspring):
@@ -117,8 +115,7 @@ def crossover(pop):
             # cross_prop = np.random.uniform(0,1)
             # offspring[f] = p1*cross_prop+p2*(1-cross_prop)
             cross_mask = np.random.choice([0, 1, 2], size=n_vars)
-            offspring[f] = np.where(cross_mask == 0, p1, 0)
-            offspring[f] = np.where(cross_mask == 1, p2, p3)
+            offspring[f] = np.where(cross_mask == 0, p1, (np.where(cross_mask == 1, p2, p3)))
             # mutation
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= mutation:
@@ -127,7 +124,7 @@ def crossover(pop):
 
             # offspring[f] = np.array(list(map(lambda y: limits(y), offspring[f])))
 
-            total_offspring = np.vstack((total_offspring, offspring[f]))
+        total_offspring = np.vstack((total_offspring, offspring))
 
     return total_offspring
 
