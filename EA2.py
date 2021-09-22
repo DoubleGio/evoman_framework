@@ -23,7 +23,7 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'test2'
+experiment_name = 'enemy2_test5_gio'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -105,19 +105,19 @@ def limits(x):
 def crossover(pop):
     total_offspring = np.zeros((0, n_vars))
 
-    for p in range(0, pop.shape[0]):
+    for p in range(0, pop.shape[0], 2):
         p1, p2, p3 = tournament(pop)
 
         # n_offspring = np.random.randint(1,3+1, 1)[0]
         n_offspring = 3
         offspring = np.zeros((n_offspring, n_vars))
 
-        for f in range(0, n_offspring,2):
+        for f in range(0, n_offspring):
 
             # cross_prop = np.random.uniform(0,1)
             # offspring[f] = p1*cross_prop+p2*(1-cross_prop)
             cross_mask = np.random.choice([0, 1, 2], size=n_vars)
-            offspring[f] = np.where(cross_mask == 0, p1, 0)  # where mask = True, insert value from p1, else insert p2
+            offspring[f] = np.where(cross_mask == 0, p1, 0)
             offspring[f] = np.where(cross_mask == 1, p2, p3)
             # mutation
             for i in range(0, len(offspring[f])):
