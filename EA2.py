@@ -8,8 +8,7 @@ from environment import Environment
 from demo_controller import player_controller
 import time
 import numpy as np
-from math import fabs, sqrt
-import glob, os
+import os
 
 # Constants
 LIM_U = 1
@@ -26,11 +25,11 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 1
+    n_runs = 10
     run_mode = 'train'
-    enemy = 1
+    enemy = 2
 
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         if len(sys.argv) == 4:
             try:
                 n_runs = int(sys.argv[1])
@@ -124,7 +123,10 @@ def main():
             chosen = np.append(chosen, indices.max(initial=0))
             pop = ranked_pop[chosen]
             fit_pop = ranked_fit_pop[chosen]
+
             best_i = np.argmax(fit_pop)  # best solution in generation
+            std = float(np.std(fit_pop))
+            mean = float(np.mean(fit_pop))
 
             # saves results
             file_aux = open(experiment_name + '/results.txt', 'a')
@@ -149,8 +151,7 @@ def main():
         fim = time.time()  # prints total execution time for experiment
         print('\nExecution time: ' + str(round((fim - ini) / 60)) + ' minutes \n')
 
-        file = open(experiment_name + '/neuroended',
-                    'w')  # saves control (simulation has ended) file for bash loop file
+        file = open(experiment_name + '/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
         file.close()
 
         file = open(experiment_name + '/results.txt', 'a')
