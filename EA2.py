@@ -88,7 +88,7 @@ def main():
         file_aux = open(experiment_name + '/results.txt', 'a')
         file_aux.write('gen best mean std')
         print(
-            f'\n RUN {run + 1} => GENERATION 0 => {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
+            f'\n RUN {run + 1}: GENERATION 0 => {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
         file_aux.write(f'\n0 {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
         file_aux.close()
 
@@ -131,7 +131,7 @@ def main():
             # saves results
             file_aux = open(experiment_name + '/results.txt', 'a')
             print(
-                f'\n RUN {run + 1} -> GENERATION {gen_i} => {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
+                f'\n RUN {run + 1}: GENERATION {gen_i} => {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
             file_aux.write(f'\n{gen_i} {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
             file_aux.close()
 
