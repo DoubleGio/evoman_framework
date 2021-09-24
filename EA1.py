@@ -27,7 +27,7 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-experiment_name = 'EA1'
+experiment_name = 'EA1testt1'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -50,8 +50,8 @@ run_mode = 'train'  # train or test
 
 
 def main():
-    n_pop = 10
-    n_gens = 5
+    n_pop = 100
+    n_gens = 30
 
     ####   Optimization for controller solution (best genotype-weights for phenotype-network): Ganetic Algorihm    ###
     ini = time.time()  # sets time marker
