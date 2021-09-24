@@ -25,9 +25,9 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 10
+    n_runs = 5
     run_mode = 'train'
-    enemy = 2
+    enemy = 3
 
     if len(sys.argv) > 1:
         if len(sys.argv) == 4:
@@ -130,8 +130,8 @@ def main():
 
             # saves results
             file_aux = open(experiment_name + '/results.txt', 'a')
-            print(
-                f'\n RUN {run + 1}: GENERATION {gen_i} => {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
+            print(f'\n RUN {run + 1}: GENERATION {gen_i} => {str(round(fit_pop[best_i], 6))} '
+                  f'{str(round(mean, 6))} {str(round(std, 6))}')
             file_aux.write(f'\n{gen_i} {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
             file_aux.close()
 
