@@ -12,6 +12,7 @@ import pygad
 sys.path.insert(0, 'evoman')
 from environment import Environment
 from demo_controller import player_controller
+from klein_scriptje import experiment_name, enemy
 
 # imports other libs
 import time
@@ -25,8 +26,10 @@ headless = True
 if headless:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
+def setexperimentname(name):
+    global experiment_name
+    experiment_name = name
 
-experiment_name = 'Pygad9'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -34,16 +37,17 @@ n_hidden_neurons = 10
 
 # initializes simulation in individual evolution mode, for single static enemy.
 env = Environment(experiment_name=experiment_name,
-                  enemies=[2],
+                  enemies=[enemy],
                   playermode="ai",
                   player_controller=player_controller(n_hidden_neurons),
                   enemymode="static",
                   level=2,
-                  speed="fastest")
+                  speed="fastest",
+                  randomini="yes")
 
-run_mode = 'train' # train or test
+run_mode = 'test' # train or test
 
-if run_mode =='test':
+if run_mode =='train':
 
     bsol = np.loadtxt(experiment_name+'/best.txt')
     print( '\n RUNNING SAVED BEST SOLUTION \n')
@@ -64,11 +68,8 @@ ini = time.time()  # sets time marker
 # number of weights for multilayer with 10 hidden neurons
 n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
-dom_u = 1
-dom_l = -1
-
 #first inputs, randomly chosen
-function_inputs = np.random.uniform(dom_l, dom_u, n_vars)
+function_inputs = np.zeros(n_vars)
 
 #implement fitness function
 def on_generation(ga):
@@ -84,28 +85,30 @@ def on_generation(ga):
     print("STD = " + std)
     print("MAX = " + max)
 
+
 def fitness_function(solution, solution_idx):
-    output = solution*function_inputs
+    #print('inputs:' + str(function_inputs))
+    #print('solution:' + str(np.mean(solution)))
+    output = solution+function_inputs
+    #print('output:'+str(np.mean(output)))
     fitness,p,e,t = env.play(output)
     return fitness
 
 num_generations = 25
-num_parents_mating = 4
+num_parents_mating = 8
 
 sol_per_pop = 80
 num_genes = len(function_inputs)
 
-init_range_low = -2
-init_range_high = 5
+init_range_low = -1
+init_range_high = 1
 
-parent_selection_type = "sus"
-keep_parents = 1
+parent_selection_type = "rws"
+keep_parents = 4
 
-crossover_type = "scattered"
-
-mutation_type = "swap"
-mutation_percent_genes = 10
-
+crossover_type = "single_point"
+mutation_type = "random"
+mutation_percent_genes = 15
 ga_instance = pygad.GA(num_generations=num_generations,
                        num_parents_mating=num_parents_mating,
                        fitness_func=fitness_function,
@@ -118,16 +121,16 @@ ga_instance = pygad.GA(num_generations=num_generations,
                        crossover_type=crossover_type,
                        mutation_type=mutation_type,
                        mutation_percent_genes=mutation_percent_genes,
-                       on_generation=on_generation
+                       on_generation=on_generation,
+                       save_best_solutions=True
                        )
 
 ga_instance.run()
 
 
-
-solution, solution_fitness, solution_idx = ga_instance.best_solution()
+generation=ga_instance.best_solution_generation
+solution = ga_instance.best_solutions[generation]
+solution_fitness = ga_instance.best_solutions_fitness[generation]
 print("Parameters of the best solution : {solution}".format(solution=solution))
 np.savetxt(experiment_name+'/best.txt', solution)
 print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=solution_fitness))
-prediction = np.sum(np.array(function_inputs)*solution)
-print("Predicted output based on the best solution : {prediction}".format(prediction=prediction))
