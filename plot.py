@@ -10,11 +10,11 @@ best = np.zeros((0, 25))
 means = np.zeros((0, 25))
 for i in range(N_TESTS):
     if EA == 2:
-        file = np.loadtxt(f'./enemy{ENEMY}_test{i+1}/results.txt', skiprows=1, max_rows=N_GENS)
+        file = np.loadtxt(f'./EA2 results/enemy{ENEMY}_test{i+1}/results.txt', skiprows=1, max_rows=N_GENS)
         best = np.vstack((best, file[:, 1]))
         means = np.vstack((means, file[:, 2]))
     else:
-        file = np.loadtxt(f'./Pygad_Chan_enemy{ENEMY}_experiment{i+1}/results.txt', skiprows=1, max_rows=N_GENS)
+        file = np.loadtxt(f'./EA1 results/Pygad_enemy{ENEMY}_test{i+1}/results.txt', skiprows=1, max_rows=N_GENS)
         best = np.vstack((best, file[:, 3]))
         means = np.vstack((means, file[:, 1]))
 
@@ -31,7 +31,7 @@ plt.fill_between(range(25), best_mean-best_std, best_mean+best_std, color='tab:o
 plt.plot(means_mean, label='mean of means', color='tab:blue', marker='o')
 plt.fill_between(range(25), means_mean-means_std, means_mean+means_std, color='tab:blue', alpha=0.5)
 
-plt.title(f'Enemy #{ENEMY} - test results')
+plt.title(f'EA{EA} test results - Enemy #{ENEMY}')
 plt.ylim(-10, 100)
 plt.xlabel('Run #')
 plt.ylabel('Fitness')
