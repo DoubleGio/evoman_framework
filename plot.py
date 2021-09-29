@@ -1,8 +1,9 @@
+## Creating the lineplots
+## VU - Evolutionary Algorithms - team 49
+## September 2021
 from matplotlib import pyplot as plt
 import numpy as np
 
-# EA = 1
-# ENEMY = 1
 N_GENS = 25
 N_TESTS = 10
 
