@@ -83,9 +83,6 @@ def train():
     # Number of weights for neural network with a single hidden layer, necessary for 'demo_controller.py'
     n_vars = (env.get_num_sensors() + 1) * N_NEURONS + (N_NEURONS + 1) * 5
 
-    # Initializing inputs
-    # function_inputs = np.zeros(n_vars)
-
     # Parameters
     num_parents_mating = 8
     parent_selection_type = "rws"
@@ -114,7 +111,7 @@ def train():
     generation = ga_instance.best_solution_generation
     solution = ga_instance.best_solutions[generation]
     solution_fitness = ga_instance.best_solutions_fitness[generation]
-    print("Parameters of the best solution : {solution}".format(solution=solution))
+    # print("Parameters of the best solution : {solution}".format(solution=solution))
     np.savetxt(experiment_loc + '/best.txt', solution)
     print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=solution_fitness))
 
