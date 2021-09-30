@@ -18,7 +18,7 @@ for EA in range(0, 2):
                 best = np.vstack((best, file[:, 1]))
                 means = np.vstack((means, file[:, 2]))
             else:
-                file = np.loadtxt(f'./EA1 results/Pygad_enemy{ENEMY+1}_test{i+1}/results.txt', skiprows=1, max_rows=N_GENS)
+                file = np.loadtxt(f'./EA1 results/enemy{ENEMY+1}_test{i+1}/results.txt', skiprows=1, max_rows=N_GENS)
                 best = np.vstack((best, file[:, 3]))
                 means = np.vstack((means, file[:, 1]))
 
