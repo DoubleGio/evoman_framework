@@ -100,11 +100,22 @@ def train(env, experiment_name, run):
     file_aux.write(f'\n0 {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
     file_aux.close()
 
+    c = 0.9
+    sigma = 1
     # Start evolving
     for gen_i in range(1, N_GENS):
         # Create children
-        children = crossover(pop, fit_pop, n_vars)
+        children = crossover(pop, fit_pop, n_vars, sigma)
         fit_children = evaluate(env, children)
+
+        if gen_i % 4 == 0:
+            best = fit_pop.max()
+            x = np.where(fit_children > best, True, False)
+            percentage = np.sum(x) / fit_children.shape[0]
+            if percentage > 0.2:
+                sigma = sigma / c
+            elif percentage < 0.2:
+                sigma = sigma * c
 
         # Have 80% of the parents, sorted on fitness, die off
         order = np.argsort(fit_pop)
@@ -189,7 +200,7 @@ def parent_selection(pop, fit_pop):
 
 
 # Children creation
-def crossover(pop, fit_pop, n_vars):
+def crossover(pop, fit_pop, n_vars, s=1):
     total_offspring = np.zeros((0, n_vars))
 
     for p in range(0, pop.shape[0], 2):  # Loop for npop / 2
@@ -203,11 +214,22 @@ def crossover(pop, fit_pop, n_vars):
             # mutation
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
-                    offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
+                    # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
+                    offspring[f][i] = limits(offspring[f][i] + np.random.normal(0, s))
 
         total_offspring = np.vstack((total_offspring, offspring))
 
     return total_offspring
+
+
+# limits
+def limits(x):
+    if x > LIM_U:
+        return LIM_U
+    elif x < LIM_L:
+        return LIM_L
+    else:
+        return x
 
 
 if __name__ == "__main__":

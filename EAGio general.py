@@ -15,8 +15,8 @@ import os
 LIM_U = 1
 LIM_L = -1
 MUTATION = 0.1
-N_POP = 80
-N_GENS = 25
+N_POP = 50
+N_GENS = 15
 N_NEURONS = 10
 
 # Disable visuals
@@ -26,9 +26,9 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 10
+    n_runs = 1
     run_mode = 'train'
-    enemy = 3
+    enemies = [2, 4, 6, 8]
 
     # Optional command line arguments
     if len(sys.argv) > 1:
@@ -37,31 +37,33 @@ def main():
                 n_runs = int(sys.argv[1])
                 if sys.argv[2] in ['test', 'train']:
                     run_mode = sys.argv[2]
-                enemy = int(sys.argv[3])
+                enemies = list(sys.argv[3])
             except:
-                print("USAGE: python EA2.py n_runs run_mode enemy")
+                print("USAGE: python EA2.py n_runs run_mode [1, 2, ...]")
                 exit()
         else:
-            print("USAGE: python EA2.py n_runs run_mode enemy")
+            print("USAGE: python EA2.py n_runs run_mode [1, 2, ...]")
             exit()
 
-    if not os.path.exists('EA2 results'):
-        os.makedirs('EA2 results')
+    folder = 'EAGio results'
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     for run in range(n_runs):
         print(f'\n=========== RUN {run + 1} / {n_runs} ===========\n')
-        experiment_loc = f'EA2 results/enemy{enemy}_test{run + 1}'
+        experiment_loc = f'{folder}/enemy{enemies}_test{run + 1}'
         if not os.path.exists(experiment_loc):
             os.makedirs(experiment_loc)
 
         env = Environment(experiment_name=experiment_loc,
-                          enemies=[enemy],
+                          enemies=enemies,
                           playermode="ai",
                           player_controller=player_controller(N_NEURONS),
                           enemymode="static",
                           level=2,
                           speed="fastest",
-                          randomini="yes")
+                          randomini="yes",
+                          multiplemode="yes")
         # Default environment fitness is assumed for experiment
         env.state_to_log()  # Checks environment state
 
@@ -103,18 +105,18 @@ def train(env, experiment_name, run):
     # Start evolving
     for gen_i in range(1, N_GENS):
         # Create children
-        children = crossover(pop, fit_pop, n_vars)
+        children = crossover(pop, fit_pop, n_vars, gen_i)
         fit_children = evaluate(env, children)
 
         # Have 80% of the parents, sorted on fitness, die off
-        order = np.argsort(fit_pop)
-        deaths = order[0:int(N_POP * 0.8)]
-        fit_pop = np.delete(fit_pop, deaths)
-        pop = np.delete(pop, deaths, axis=0)
+        # order = np.argsort(fit_pop)
+        # deaths = order[0:int(N_POP * 0.8)]
+        # fit_pop = np.delete(fit_pop, deaths)
+        # pop = np.delete(pop, deaths, axis=0)
 
-        # Add children to the total pop
-        pop = np.vstack((pop, children))
-        fit_pop = np.append(fit_pop, fit_children)
+        # All parents die, children are new pop
+        pop = children
+        fit_pop = fit_children
 
         # Survival using exponential ranked selection
         # Rank the pop and fit_pop
@@ -189,7 +191,7 @@ def parent_selection(pop, fit_pop):
 
 
 # Children creation
-def crossover(pop, fit_pop, n_vars):
+def crossover(pop, fit_pop, n_vars, gen_i):
     total_offspring = np.zeros((0, n_vars))
 
     for p in range(0, pop.shape[0], 2):  # Loop for npop / 2
@@ -203,11 +205,23 @@ def crossover(pop, fit_pop, n_vars):
             # mutation
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
-                    offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
+                    # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
+                    s = 1 - 0.9 * (gen_i / N_GENS)
+                    offspring[f][i] = limits(offspring[f][i] + np.random.normal(0, s))
 
         total_offspring = np.vstack((total_offspring, offspring))
 
     return total_offspring
+
+
+# limits
+def limits(x):
+    if x > LIM_U:
+        return LIM_U
+    elif x < LIM_L:
+        return LIM_L
+    else:
+        return x
 
 
 if __name__ == "__main__":

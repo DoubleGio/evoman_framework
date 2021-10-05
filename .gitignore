@@ -1,2 +1,4 @@
-.idea
-_pycache_
+.idea/
+.DS_Store
+__pycache__/
+evoman/
