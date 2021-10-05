@@ -1,9 +1,10 @@
-# EA1
-# Gio & Pleuntje
-# Evolutionary Algorithms - VU
+## EA2
+## VU - Evolutionary Algorithms - team 49
+## September 2021
+
 import sys
 
-sys.path.insert(0, 'evoman')
+sys.path.insert(0, 'evoman')  # Quite confusing but for whatever reason this line is needed to make the game run at all
 from environment import Environment
 from demo_controller import player_controller
 import time
@@ -25,10 +26,11 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 5
+    n_runs = 10
     run_mode = 'train'
     enemy = 3
 
+    # Optional command line arguments
     if len(sys.argv) > 1:
         if len(sys.argv) == 4:
             try:
@@ -43,14 +45,16 @@ def main():
             print("USAGE: python EA2.py n_runs run_mode enemy")
             exit()
 
-    for run in range(n_runs):
-        print(f'\n=========== RUN {run + 1} ===========\n')
-        experiment_name = f'enemy{enemy}_test{run + 1}'
-        if not os.path.exists(experiment_name):
-            os.makedirs(experiment_name)
+    if not os.path.exists('EA2 results'):
+        os.makedirs('EA2 results')
 
-        # Initializes simulation
-        env = Environment(experiment_name=experiment_name,
+    for run in range(n_runs):
+        print(f'\n=========== RUN {run + 1} / {n_runs} ===========\n')
+        experiment_loc = f'EA2 results/enemy{enemy}_test{run + 1}'
+        if not os.path.exists(experiment_loc):
+            os.makedirs(experiment_loc)
+
+        env = Environment(experiment_name=experiment_loc,
                           enemies=[enemy],
                           playermode="ai",
                           player_controller=player_controller(N_NEURONS),
@@ -61,135 +65,135 @@ def main():
         # Default environment fitness is assumed for experiment
         env.state_to_log()  # Checks environment state
 
+        if run_mode == 'train':
+            train(env, experiment_loc, run)
+
         if run_mode == 'test':
-            bsol = np.loadtxt(experiment_name + '/best.txt')
-            print('\n RUNNING SAVED BEST SOLUTION \n')
-            env.update_parameter('speed', 'normal')
-            evaluate(env, [bsol])
-            continue
+            test_best(env, experiment_loc)
 
-        ini = time.time()  # sets time marker
 
-        # Genetic Algorithm start
-        # Number of weights for neural network with a single hidden layer
-        n_vars = (env.get_num_sensors() + 1) * N_NEURONS + (N_NEURONS + 1) * 5
+# Train the EA
+def train(env, experiment_name, run):
+    ini = time.time()  # Time marker, to keep track of the experiment duration
 
-        # Initial population
-        print(' NEW EVOLUTION\n')
-        pop = np.random.uniform(LIM_L, LIM_U, (N_POP, n_vars))
-        fit_pop = evaluate(env, pop)
-        best_i = np.argmax(fit_pop)
-        mean = float(np.mean(fit_pop))
+    # Evolutionary Algorithm start
+
+    # We make use of the standard 'demo_controller.py'
+    # Number of weights for neural network with a single hidden layer, necessary for 'demo_controller.py'
+    n_vars = (env.get_num_sensors() + 1) * N_NEURONS + (N_NEURONS + 1) * 5
+
+    # Initial population (random uniform)
+    print(' INITIALIZING GENERATION\n')
+    pop = np.random.uniform(LIM_L, LIM_U, (N_POP, n_vars))
+    fit_pop = evaluate(env, pop)
+    best_i = np.argmax(fit_pop)
+    mean = float(np.mean(fit_pop))
+    std = float(np.std(fit_pop))
+    solutions = [pop, fit_pop]
+    env.update_solutions(solutions)
+
+    # Write/log results for pop 0
+    file_aux = open(f'{experiment_name}/results.txt', 'a')
+    file_aux.write('gen best mean std')
+    print(f'\n RUN {run + 1}: GENERATION 0 => '
+          f'{str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
+    file_aux.write(f'\n0 {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
+    file_aux.close()
+
+    # Start evolving
+    for gen_i in range(1, N_GENS):
+        # Create children
+        children = crossover(pop, fit_pop, n_vars)
+        fit_children = evaluate(env, children)
+
+        # Have 80% of the parents, sorted on fitness, die off
+        order = np.argsort(fit_pop)
+        deaths = order[0:int(N_POP * 0.8)]
+        fit_pop = np.delete(fit_pop, deaths)
+        pop = np.delete(pop, deaths, axis=0)
+
+        # Add children to the total pop
+        pop = np.vstack((pop, children))
+        fit_pop = np.append(fit_pop, fit_children)
+
+        # Survival using exponential ranked selection
+        # Rank the pop and fit_pop
+        ranking = np.argsort(fit_pop)
+        ranked_pop = pop[ranking]
+        ranked_fit_pop = fit_pop[ranking]
+        # Get the probabilities based on rank
+        indices = np.arange(0, pop.shape[0])
+        p = (1 - np.exp(-indices))
+        probabilities = p / np.sum(p)
+
+        # Choose the survivors + always add the highest ranked (can be added twice)
+        chosen = np.random.choice(pop.shape[0], N_POP - 1, p=probabilities, replace=False)
+        chosen = np.append(chosen, indices.max(initial=0))
+        pop = ranked_pop[chosen]
+        fit_pop = ranked_fit_pop[chosen]
+
+        best_i = np.argmax(fit_pop)  # best solution in generation
         std = float(np.std(fit_pop))
-        solutions = [pop, fit_pop]
-        env.update_solutions(solutions)
+        mean = float(np.mean(fit_pop))
 
-        # Write/log results for pop 0
-        file_aux = open(experiment_name + '/results.txt', 'a')
-        file_aux.write('gen best mean std')
-        print(
-            f'\n RUN {run + 1}: GENERATION 0 => {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
-        file_aux.write(f'\n0 {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
+        # saves results
+        file_aux = open(f'{experiment_name}/results.txt', 'a')
+        print(f'\n RUN {run + 1}: GENERATION {gen_i} => {str(round(fit_pop[best_i], 6))} '
+              f'{str(round(mean, 6))} {str(round(std, 6))}')
+        file_aux.write(f'\n{gen_i} {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
         file_aux.close()
 
-        # Start evolving
-        for gen_i in range(1, N_GENS):
-            # Create children
-            children = crossover(pop, fit_pop, n_vars)
-            fit_children = evaluate(env, children)
+        # saves file with the best solution
+        np.savetxt(f'{experiment_name}/best.txt', pop[best_i])
 
-            # Have 80% of the parents, sorted on fitness, die off
-            order = np.argsort(fit_pop)
-            deaths = order[0:int(N_POP * 0.8)]
-            fit_pop = np.delete(fit_pop, deaths)
-            pop = np.delete(pop, deaths, axis=0)
+        # saves simulation state
+        solutions = [pop, fit_pop]
+        env.update_solutions(solutions)
+        env.save_state()
 
-            # Add children to the total pop
-            pop = np.vstack((pop, children))
-            fit_pop = np.append(fit_pop, fit_children)
+    fim = time.time()  # prints total execution time for experiment
+    print('\nExecution time: ' + str(round((fim - ini) / 60)) + ' minutes \n')
 
-            # Survival using exponential ranked selection
-            # Rank the pop and fit_pop
-            ranking = np.argsort(fit_pop)
-            ranked_pop = pop[ranking]
-            ranked_fit_pop = fit_pop[ranking]
-            # Get the probabilities based on rank
-            indices = np.arange(0, pop.shape[0])
-            p = (1 - np.exp(-indices))
-            probabilities = p / np.sum(p)
+    file = open(f'{experiment_name}/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
+    file.close()
 
-            # Choose the survivors + always add the highest ranked (can be added twice)
-            chosen = np.random.choice(pop.shape[0], N_POP - 1, p=probabilities, replace=False)
-            chosen = np.append(chosen, indices.max(initial=0))
-            pop = ranked_pop[chosen]
-            fit_pop = ranked_fit_pop[chosen]
+    file = open(f'{experiment_name}/results.txt', 'a')
+    file.write('\nExecution time: ' + str(round((fim - ini) / 60)) + ' minutes \n')
+    file.close()
 
-            best_i = np.argmax(fit_pop)  # best solution in generation
-            std = float(np.std(fit_pop))
-            mean = float(np.mean(fit_pop))
-
-            # saves results
-            file_aux = open(experiment_name + '/results.txt', 'a')
-            print(f'\n RUN {run + 1}: GENERATION {gen_i} => {str(round(fit_pop[best_i], 6))} '
-                  f'{str(round(mean, 6))} {str(round(std, 6))}')
-            file_aux.write(f'\n{gen_i} {str(round(fit_pop[best_i], 6))} {str(round(mean, 6))} {str(round(std, 6))}')
-            file_aux.close()
-
-            # saves generation number
-            file_aux = open(experiment_name + '/gen.txt', 'w')
-            file_aux.write(str(gen_i))
-            file_aux.close()
-
-            # saves file with the best solution
-            np.savetxt(experiment_name + '/best.txt', pop[best_i])
-
-            # saves simulation state
-            solutions = [pop, fit_pop]
-            env.update_solutions(solutions)
-            env.save_state()
-
-        fim = time.time()  # prints total execution time for experiment
-        print('\nExecution time: ' + str(round((fim - ini) / 60)) + ' minutes \n')
-
-        file = open(experiment_name + '/neuroended', 'w')  # saves control (simulation has ended) file for bash loop file
-        file.close()
-
-        file = open(experiment_name + '/results.txt', 'a')
-        file.write('\nExecution time: ' + str(round((fim - ini) / 60)) + ' minutes \n')
-        file.close()
-
-        env.state_to_log()  # checks environment state
+    env.state_to_log()  # checks environment state
 
 
-# runs simulation
-def simulation(env, x):
-    f, _, _, _ = env.play(pcont=x)
-    return f
+# Test the best found solution
+def test_best(env, experiment_name):
+    best_solution = np.loadtxt(experiment_name + '/best.txt')
+    print('\n RUNNING SAVED BEST SOLUTION \n')
+    env.update_parameter('speed', 'normal')
+    evaluate(env, [best_solution])
 
 
-# evaluation
+# Takes a population, runs a simulation for each agent and returns an array containing the resulting fitnesses
 def evaluate(env, x):
-    return np.array(list(map(lambda y: simulation(env, y), x)))
+    return np.apply_along_axis(lambda y: env.play(pcont=y), 1, x)[:, 0]
 
 
-# tournament
-def tournament(pop, fit_pop):
-    n_options = 3 if pop.shape[0] < 40 else pop.shape[0] // 10  # N possible parents = 10% of pop or 2
-    # n_options = 6
+# Parent selection
+def parent_selection(pop, fit_pop):
+    n_options = 3 if pop.shape[0] < 40 else pop.shape[0] // 10  # N possible parents = 10% of pop or 3
     i_options = np.random.randint(0, pop.shape[0], n_options)  # get indices of random options
     fit_options = fit_pop.take(i_options)  # get fitness of these options
     options = np.vstack((i_options, fit_options))  # add to one matrix
 
     i_parents = np.flip(options[:, options[1].argsort()], 1)[0, 0:3]  # sort this matrix on fitness, select best three
-    return pop[int(i_parents[0])], pop[int(i_parents[1])], pop[int(i_parents[2])]  # return the three best parents
+    return pop[int(i_parents[0])], pop[int(i_parents[1])], pop[int(i_parents[2])]  # return these three best parents
 
 
-# crossover
+# Children creation
 def crossover(pop, fit_pop, n_vars):
     total_offspring = np.zeros((0, n_vars))
 
     for p in range(0, pop.shape[0], 2):
-        p1, p2, p3 = tournament(pop, fit_pop)
+        p1, p2, p3 = parent_selection(pop, fit_pop)
         n_offspring = 3
         offspring = np.zeros((n_offspring, n_vars))
 
@@ -199,7 +203,6 @@ def crossover(pop, fit_pop, n_vars):
             # mutation
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
-                    # offspring[f][i] = offspring[f][i]+np.random.normal(0, 1)
                     offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
 
         total_offspring = np.vstack((total_offspring, offspring))
