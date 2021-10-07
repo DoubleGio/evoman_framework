@@ -16,7 +16,7 @@ import os
 LIM_U = 1
 LIM_L = -1
 MUTATION = 0.1
-N_POP = 80
+N_POP = 10
 N_GENS = 25
 N_NEURONS = 10
 FOLDER = 'EAGio results'
@@ -98,8 +98,8 @@ def train(env, experiment_name, run):
         fit_children = evaluate(env, children)
 
         # All parents die, children are new pop
-        pop = children
-        fit_pop = fit_children
+        pop = np.copy(children)
+        fit_pop = np.copy(fit_children)
 
         # Survival using exponential ranked selection
         # Rank the pop and fit_pop
@@ -193,7 +193,7 @@ def crossover(pop, fit_pop, n_vars, gen_i):
                     # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
                     s = 1 - 0.9 * (gen_i / N_GENS)
                     offspring[f][i] = offspring[f][i] + np.random.normal(0, s)
-            offspring[f] = np.clip(offspring[f], LIM_U, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
+            offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
 
         total_offspring = np.vstack((total_offspring, offspring))
 

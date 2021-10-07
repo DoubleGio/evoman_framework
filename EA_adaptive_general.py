@@ -110,8 +110,8 @@ def train(env, experiment_name, run):
                 sigma = sigma * c
 
         # Add children to the total pop
-        pop = np.vstack((pop, children))
-        fit_pop = np.append(fit_pop, fit_children)
+        pop = np.copy(children)
+        fit_pop = np.copy(fit_children)
 
         # Survival using exponential ranked selection
         # Rank the pop and fit_pop
@@ -204,7 +204,7 @@ def crossover(pop, fit_pop, n_vars, sigma=1):
                 if np.random.uniform(0, 1) <= MUTATION:
                     # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
                     offspring[f][i] = offspring[f][i] + np.random.normal(0, sigma)
-            offspring[f] = np.clip(offspring[f], LIM_U, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
+            offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
 
         total_offspring = np.vstack((total_offspring, offspring))
 
