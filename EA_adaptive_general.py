@@ -28,7 +28,7 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 10
+    n_runs = 5
     run_mode = 'train'
     enemies = [2, 4, 6, 8]
     # enemies = [1, 3, 5, 7]
@@ -74,7 +74,7 @@ def train(env, experiment_name, run):
     n_vars = (env.get_num_sensors() + 1) * N_NEURONS + (N_NEURONS + 1) * 5
 
     # Initial population (random uniform)
-    print(' INITIALIZING GENERATION\n')
+    print('\n   INITIALIZATION\n')
     pop = np.random.uniform(LIM_L, LIM_U, (N_POP, n_vars))
     fit_pop = evaluate(env, pop)
     best_i = np.argmax(fit_pop)
@@ -204,7 +204,7 @@ def crossover(pop, fit_pop, n_vars, sigma=1):
                 if np.random.uniform(0, 1) <= MUTATION:
                     # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
                     offspring[f][i] = offspring[f][i] + np.random.normal(0, sigma)
-            offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
+            offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than -1 become -1, higher than 1 become 1
 
         total_offspring = np.vstack((total_offspring, offspring))
 
