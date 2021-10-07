@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, 'evoman')  # Quite confusing but for whatever reason this line is needed to make the game run at all
 from environment import Environment
 from demo_controller import player_controller
+from matplotlib import pyplot as plt
 import time
 import numpy as np
 import os
@@ -15,8 +16,8 @@ import os
 LIM_U = 1
 LIM_L = -1
 MUTATION = 0.1
-N_POP = 80
-N_GENS = 25
+N_POP = 60
+N_GENS = 15
 N_NEURONS = 10
 
 # Disable visuals
@@ -26,9 +27,9 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 10
+    n_runs = 1
     run_mode = 'train'
-    enemy = 3
+    enemies = [2, 4, 6, 8]
 
     # Optional command line arguments
     if len(sys.argv) > 1:
@@ -37,7 +38,7 @@ def main():
                 n_runs = int(sys.argv[1])
                 if sys.argv[2] in ['test', 'train']:
                     run_mode = sys.argv[2]
-                enemy = int(sys.argv[3])
+                enemies = int(sys.argv[3])
             except:
                 print("USAGE: python EA2.py n_runs run_mode enemy")
                 exit()
@@ -45,23 +46,25 @@ def main():
             print("USAGE: python EA2.py n_runs run_mode enemy")
             exit()
 
-    if not os.path.exists('EA2 results'):
-        os.makedirs('EA2 results')
+    folder = 'EAChantal results'
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     for run in range(n_runs):
         print(f'\n=========== RUN {run + 1} / {n_runs} ===========\n')
-        experiment_loc = f'EA2 results/enemy{enemy}_test{run + 1}'
+        experiment_loc = f'{folder}/enemy{enemies}_test{run + 1}'
         if not os.path.exists(experiment_loc):
             os.makedirs(experiment_loc)
 
         env = Environment(experiment_name=experiment_loc,
-                          enemies=[enemy],
+                          enemies=enemies,
                           playermode="ai",
                           player_controller=player_controller(N_NEURONS),
                           enemymode="static",
                           level=2,
                           speed="fastest",
-                          randomini="yes")
+                          randomini="yes",
+                          multiplemode="yes")
         # Default environment fitness is assumed for experiment
         env.state_to_log()  # Checks environment state
 
@@ -70,6 +73,7 @@ def main():
 
         if run_mode == 'test':
             test_best(env, experiment_loc)
+    plot(n_runs, enemies)
 
 
 # Train the EA
@@ -108,7 +112,8 @@ def train(env, experiment_name, run):
         children = crossover(pop, fit_pop, n_vars, sigma)
         fit_children = evaluate(env, children)
 
-        if gen_i % 4 == 0:
+        # 1/5 rule thingy
+        if gen_i % 2 == 0:
             best = fit_pop.max()
             x = np.where(fit_children > best, True, False)
             percentage = np.sum(x) / fit_children.shape[0]
@@ -188,23 +193,25 @@ def evaluate(env, x):
     return np.apply_along_axis(lambda y: env.play(pcont=y), 1, x)[:, 0]
 
 
-# Parent selection
-def parent_selection(pop, fit_pop):
-    n_options = 3 if pop.shape[0] < 40 else pop.shape[0] // 10  # N possible parents = 10% of pop or 3
-    i_options = np.random.randint(0, pop.shape[0], n_options)  # get indices of random options
-    fit_options = fit_pop.take(i_options)  # get fitness of these options
-    options = np.vstack((i_options, fit_options))  # add to one matrix
-
-    i_parents = np.flip(options[:, options[1].argsort()], 1)[0, 0:3]  # sort this matrix on fitness, select best three
-    return pop[int(i_parents[0])], pop[int(i_parents[1])], pop[int(i_parents[2])]  # return these three best parents
+# Tournament selection
+def parent_selection(pop, fit_pop, sigma, n_parents=3):
+    parents = np.zeros((n_parents, pop.shape[1]))
+    percentage = (10 + (1 - sigma) * 40) / 100
+    tournament_size = max(5, np.floor(pop.shape[0] * percentage))  # Tournament size = max(5, 10-50% of pop)
+    for i in range(0, n_parents):
+        i_options = np.random.randint(0, pop.shape[0], int(tournament_size))  # randomly pick some individuals
+        fit_options = fit_pop.take(i_options)  # get fitness of these options
+        options = np.vstack((i_options, fit_options))  # combine into one matrix
+        parents[i] = pop[int(options[0, options[1].argmax()])]  # select the best option as parent
+    return parents
 
 
 # Children creation
-def crossover(pop, fit_pop, n_vars, s=1):
+def crossover(pop, fit_pop, n_vars, sigma=1):
     total_offspring = np.zeros((0, n_vars))
 
     for p in range(0, pop.shape[0], 2):  # Loop for npop / 2
-        p1, p2, p3 = parent_selection(pop, fit_pop)
+        p1, p2, p3 = parent_selection(pop, fit_pop, sigma)
         n_offspring = 3
         offspring = np.zeros((n_offspring, n_vars))
 
@@ -215,7 +222,7 @@ def crossover(pop, fit_pop, n_vars, s=1):
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
                     # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
-                    offspring[f][i] = limits(offspring[f][i] + np.random.normal(0, s))
+                    offspring[f][i] = limits(offspring[f][i] + np.random.normal(0, sigma))
 
         total_offspring = np.vstack((total_offspring, offspring))
 
@@ -230,6 +237,32 @@ def limits(x):
         return LIM_L
     else:
         return x
+
+
+def plot(n_tests, enemies):
+    best = np.zeros((0, N_GENS))
+    means = np.zeros((0, N_GENS))
+    for i in range(n_tests):
+        file = np.loadtxt(f'EAChantal results/enemy{enemies}_test{i + 1}/results.txt', skiprows=1, max_rows=N_GENS)
+        best = np.vstack((best, file[:, 1]))
+        means = np.vstack((means, file[:, 2]))
+    best_mean = np.mean(best, axis=0)
+    best_std = np.std(best, axis=0)
+
+    means_mean = np.mean(means, axis=0)
+    means_std = np.std(means, axis=0)
+
+    plt.title(f'EAGio - Enemies {enemies}')
+    plt.xlabel('Run #')
+    plt.ylabel('Fitness')
+    plt.ylim(-10, 100)
+    plt.plot(best_mean, label='mean of bests', color='tab:orange', marker='o')
+    plt.fill_between(range(N_GENS), best_mean - best_std, best_mean + best_std, color='tab:orange', alpha=0.5)
+
+    plt.plot(means_mean, label='mean of means', color='tab:blue', marker='o')
+    plt.fill_between(range(N_GENS), means_mean - means_std, means_mean + means_std, color='tab:blue', alpha=0.5)
+    plt.legend()
+    plt.show()
 
 
 if __name__ == "__main__":
