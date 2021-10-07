@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 N_GENS = 25
-N_TESTS = 10
+N_TESTS = 2
 ENEMIES = [2, 4, 6, 8]
 FOLDER = "EAGio results"
 
@@ -23,7 +23,7 @@ means_mean = np.mean(means, axis=0)
 means_std = np.std(means, axis=0)
 
 plt.title(f'EA Adaptive - Results {ENEMIES}')
-plt.xlabel('Run #')
+plt.xlabel('Generation #')
 plt.ylabel('Fitness')
 plt.ylim(-10, 100)
 plt.plot(best_mean, label='mean of bests', color='tab:orange', marker='o')
@@ -34,5 +34,5 @@ plt.fill_between(range(N_GENS), means_mean - means_std, means_mean + means_std, 
 plt.legend()
 plt.show()
 
-# plt.savefig(f'plots/{FOLDER} lineplots.png')
+plt.savefig(f'plots/{FOLDER} lineplots.png')
 plt.show()
