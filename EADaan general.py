@@ -10,13 +10,14 @@ from demo_controller import player_controller
 import time
 import numpy as np
 import os
+from matplotlib import pyplot as plt
 
 # Constants
 LIM_U = 1
 LIM_L = -1
 MUTATION = 0.1
-N_POP = 80
-N_GENS = 25
+N_POP = 60
+N_GENS = 15
 N_NEURONS = 10
 
 # Disable visuals
@@ -26,9 +27,9 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 10
+    n_runs = 1
     run_mode = 'train'
-    enemy = 3
+    enemy = [2,4,6,8]
 
     # Optional command line arguments
     if len(sys.argv) > 1:
@@ -55,13 +56,14 @@ def main():
             os.makedirs(experiment_loc)
 
         env = Environment(experiment_name=experiment_loc,
-                          enemies=[enemy],
+                          enemies=enemy,
                           playermode="ai",
                           player_controller=player_controller(N_NEURONS),
                           enemymode="static",
                           level=2,
                           speed="fastest",
-                          randomini="yes")
+                          randomini="yes",
+                          multiplemode="yes")
         # Default environment fitness is assumed for experiment
         env.state_to_log()  # Checks environment state
 
@@ -123,8 +125,15 @@ def train(env, experiment_name, run):
         ranked_fit_pop = fit_pop[ranking]
         # Get the probabilities based on rank
         indices = np.arange(0, pop.shape[0])
-        p = (1 - np.exp(-indices))
-        probabilities = p / np.sum(p)
+        #p = (1 - np.exp(-indices))
+        s=1.75
+        p=np.zeros(indices.shape)
+        for i in indices:
+            p[i]= ((2 - s) / pop.shape[0]) + ((2 * (i*(s - 1))) / (pop.shape[0] * (pop.shape[0] - 1)))
+        print(p)
+        print(pop.shape[0])
+        probabilities = p
+
 
         # Choose the survivors + always add the highest ranked (can be added twice)
         chosen = np.random.choice(pop.shape[0], N_POP - 1, p=probabilities, replace=False)
