@@ -125,13 +125,10 @@ def train(env, experiment_name, run):
         ranked_fit_pop = fit_pop[ranking]
         # Get the probabilities based on rank
         indices = np.arange(0, pop.shape[0])
-        #p = (1 - np.exp(-indices))
         s=1.75
         p=np.zeros(indices.shape)
         for i in indices:
             p[i]= ((2 - s) / pop.shape[0]) + ((2 * (i*(s - 1))) / (pop.shape[0] * (pop.shape[0] - 1)))
-        print(p)
-        print(pop.shape[0])
         probabilities = p
 
 
