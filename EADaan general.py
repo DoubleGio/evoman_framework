@@ -128,7 +128,7 @@ def train(env, experiment_name, run):
         s=1.75
         p=np.zeros(indices.shape)
         for i in indices:
-            p[i]= ((2 - s) / pop.shape[0]) + ((2 * (i*(s - 1))) / (pop.shape[0] * (pop.shape[0] - 1)))
+            p[i] = ((2 - s) / pop.shape[0]) + ((2 * (i*(s - 1))) / (pop.shape[0] * (pop.shape[0] - 1)))
         probabilities = p
 
 

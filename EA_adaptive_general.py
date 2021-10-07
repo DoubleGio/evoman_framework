@@ -1,6 +1,6 @@
-## EA2
-## VU - Evolutionary Algorithms - team 49
-## September 2021
+# EA2
+# VU - Evolutionary Algorithms - team 49
+# September 2021
 
 import sys
 
@@ -16,9 +16,10 @@ import os
 LIM_U = 1
 LIM_L = -1
 MUTATION = 0.1
-N_POP = 60
-N_GENS = 15
+N_POP = 80
+N_GENS = 25
 N_NEURONS = 10
+FOLDER = 'EAGio results'
 
 # Disable visuals
 HEADLESS = True
@@ -27,32 +28,17 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 1
+    n_runs = 10
     run_mode = 'train'
     enemies = [2, 4, 6, 8]
+    # enemies = [1, 3, 5, 7]
 
-    # Optional command line arguments
-    if len(sys.argv) > 1:
-        if len(sys.argv) == 4:
-            try:
-                n_runs = int(sys.argv[1])
-                if sys.argv[2] in ['test', 'train']:
-                    run_mode = sys.argv[2]
-                enemies = int(sys.argv[3])
-            except:
-                print("USAGE: python EA2.py n_runs run_mode enemy")
-                exit()
-        else:
-            print("USAGE: python EA2.py n_runs run_mode enemy")
-            exit()
-
-    folder = 'EAChantal results'
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+    if not os.path.exists(FOLDER):
+        os.makedirs(FOLDER)
 
     for run in range(n_runs):
         print(f'\n=========== RUN {run + 1} / {n_runs} ===========\n')
-        experiment_loc = f'{folder}/enemy{enemies}_test{run + 1}'
+        experiment_loc = f'{FOLDER}/enemy{enemies}_test{run + 1}'
         if not os.path.exists(experiment_loc):
             os.makedirs(experiment_loc)
 
@@ -73,7 +59,7 @@ def main():
 
         if run_mode == 'test':
             test_best(env, experiment_loc)
-    plot(n_runs, enemies)
+    # plot(n_runs, enemies)
 
 
 # Train the EA
@@ -122,12 +108,6 @@ def train(env, experiment_name, run):
             elif percentage < 0.2:
                 sigma = sigma * c
 
-        # Have 80% of the parents, sorted on fitness, die off
-        order = np.argsort(fit_pop)
-        deaths = order[0:int(N_POP * 0.8)]
-        fit_pop = np.delete(fit_pop, deaths)
-        pop = np.delete(pop, deaths, axis=0)
-
         # Add children to the total pop
         pop = np.vstack((pop, children))
         fit_pop = np.append(fit_pop, fit_children)
@@ -139,8 +119,8 @@ def train(env, experiment_name, run):
         ranked_fit_pop = fit_pop[ranking]
         # Get the probabilities based on rank
         indices = np.arange(0, pop.shape[0])
-        p = (1 - np.exp(-indices))
-        probabilities = p / np.sum(p)
+        s = 1.75
+        probabilities = ((2 - s) / pop.shape[0]) + ((2 * (indices * (s - 1))) / (pop.shape[0] * (pop.shape[0] - 1)))
 
         # Choose the survivors + always add the highest ranked (can be added twice)
         chosen = np.random.choice(pop.shape[0], N_POP - 1, p=probabilities, replace=False)
@@ -222,21 +202,12 @@ def crossover(pop, fit_pop, n_vars, sigma=1):
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
                     # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
-                    offspring[f][i] = limits(offspring[f][i] + np.random.normal(0, sigma))
+                    offspring[f][i] = offspring[f][i] + np.random.normal(0, sigma)
+            offspring[f] = np.clip(offspring[f], LIM_U, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
 
         total_offspring = np.vstack((total_offspring, offspring))
 
     return total_offspring
-
-
-# limits
-def limits(x):
-    if x > LIM_U:
-        return LIM_U
-    elif x < LIM_L:
-        return LIM_L
-    else:
-        return x
 
 
 def plot(n_tests, enemies):
