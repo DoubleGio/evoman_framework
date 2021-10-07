@@ -51,6 +51,7 @@ def main():
                           speed="fastest",
                           randomini="yes",
                           multiplemode="yes")
+        env.cons_multi = custom_cons_multi
         # Default environment fitness is assumed for experiment
         env.state_to_log()  # Checks environment state
 
@@ -208,6 +209,10 @@ def crossover(pop, fit_pop, n_vars, sigma=1):
         total_offspring = np.vstack((total_offspring, offspring))
 
     return total_offspring
+
+
+def custom_cons_multi(values):
+    return values.mean()
 
 
 def plot(n_tests, enemies):
