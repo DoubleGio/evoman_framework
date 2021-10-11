@@ -28,7 +28,7 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 5
+    n_runs = 3
     run_mode = 'train'
     enemies = [2, 4, 6, 8]
     # enemies = [1, 3, 5, 7]
@@ -219,7 +219,7 @@ def plot(n_tests, enemies):
     best = np.zeros((0, N_GENS))
     means = np.zeros((0, N_GENS))
     for i in range(n_tests):
-        file = np.loadtxt(f'EAChantal results/enemy{enemies}_test{i + 1}/results.txt', skiprows=1, max_rows=N_GENS)
+        file = np.loadtxt(f'{FOLDER}/enemy{enemies}_test{i + 1}/results.txt', skiprows=1, max_rows=N_GENS)
         best = np.vstack((best, file[:, 1]))
         means = np.vstack((means, file[:, 2]))
     best_mean = np.mean(best, axis=0)
@@ -228,7 +228,7 @@ def plot(n_tests, enemies):
     means_mean = np.mean(means, axis=0)
     means_std = np.std(means, axis=0)
 
-    plt.title(f'EAGio - Enemies {enemies}')
+    plt.title(f'EA Adaptive - Enemies {enemies}')
     plt.xlabel('Run #')
     plt.ylabel('Fitness')
     plt.ylim(-10, 100)

@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 N_GENS = 25
-N_TESTS = 4
+N_TESTS = 10
 ENEMIES = [2, 4, 6, 8]
 FOLDER = "EAGio results"
 
