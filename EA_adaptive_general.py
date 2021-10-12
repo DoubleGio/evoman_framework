@@ -28,7 +28,7 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 10
+    n_runs = 3
     run_mode = 'train'
     enemies = [2, 4, 6, 8]
     # enemies = [1, 3, 5, 7]
@@ -74,7 +74,7 @@ def train(env, experiment_name, run):
     n_vars = (env.get_num_sensors() + 1) * N_NEURONS + (N_NEURONS + 1) * 5
 
     # Initial population (random uniform)
-    print(' INITIALIZING GENERATION\n')
+    print('\n   INITIALIZATION\n')
     pop = np.random.uniform(LIM_L, LIM_U, (N_POP, n_vars))
     fit_pop = evaluate(env, pop)
     best_i = np.argmax(fit_pop)
@@ -204,7 +204,7 @@ def crossover(pop, fit_pop, n_vars, sigma=1):
                 if np.random.uniform(0, 1) <= MUTATION:
                     # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
                     offspring[f][i] = offspring[f][i] + np.random.normal(0, sigma)
-            offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than 0 become 0, higher than 1 become 1
+            offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than -1 become -1, higher than 1 become 1
 
         total_offspring = np.vstack((total_offspring, offspring))
 
@@ -219,7 +219,7 @@ def plot(n_tests, enemies):
     best = np.zeros((0, N_GENS))
     means = np.zeros((0, N_GENS))
     for i in range(n_tests):
-        file = np.loadtxt(f'EAChantal results/enemy{enemies}_test{i + 1}/results.txt', skiprows=1, max_rows=N_GENS)
+        file = np.loadtxt(f'{FOLDER}/enemy{enemies}_test{i + 1}/results.txt', skiprows=1, max_rows=N_GENS)
         best = np.vstack((best, file[:, 1]))
         means = np.vstack((means, file[:, 2]))
     best_mean = np.mean(best, axis=0)
@@ -228,7 +228,7 @@ def plot(n_tests, enemies):
     means_mean = np.mean(means, axis=0)
     means_std = np.std(means, axis=0)
 
-    plt.title(f'EAGio - Enemies {enemies}')
+    plt.title(f'EA Adaptive - Enemies {enemies}')
     plt.xlabel('Run #')
     plt.ylabel('Fitness')
     plt.ylim(-10, 100)
