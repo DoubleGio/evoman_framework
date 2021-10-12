@@ -1,4 +1,4 @@
-# Creating the boxplots
+# Creating the table
 # VU - Evolutionary Algorithms - team 49
 # September 2021
 import sys
@@ -28,6 +28,7 @@ def custom_cons_multi(values):
     return values.mean()
 
 
+best = []
 data = {'EA Det. - Odd': [], 'EA Det. - Even': [], 'EA Ada. - Odd': [], 'EA Ada. - Even': []}
 for i, key in enumerate(data):
     r = []
@@ -35,20 +36,20 @@ for i, key in enumerate(data):
         experiment_loc = f'{FOLDERS[i]}_test{run + 1}'
         f = []
         for repeat in range(N_REPEATS):
-            env = Environment(experiment_name=experiment_loc,
-                              enemies=ENEMIES,
-                              playermode="ai",
-                              player_controller=player_controller(N_NEURONS),
-                              enemymode="static",
-                              level=2,
-                              speed="fastest",
-                              randomini="yes",
-                              multiplemode="yes")
-            env.cons_multi = custom_cons_multi
-            best_sol = np.loadtxt(experiment_loc + '/best.txt')
-            print(f'\n{FOLDERS[i]} - RUN {run + 1} - REPEAT {repeat + 1}\n')
-            fitness, player_life, enemy_life, _ = env.play(pcont=best_sol)
-            f.append(fitness)
+            e = np.zeros((0,2))
+            for enemy in ENEMIES:
+                env = Environment(experiment_name=experiment_loc,
+                                  enemies=[enemy],
+                                  playermode="ai",
+                                  player_controller=player_controller(N_NEURONS),
+                                  enemymode="static",
+                                  level=2,
+                                  speed="fastest",
+                                  randomini="yes")
+                best_sol = np.loadtxt(experiment_loc + '/best.txt')
+                print(f'\n{FOLDERS[i]} - RUN {run + 1} - REPEAT {repeat + 1}\n')
+                fitness, player_life, enemy_life, _ = env.play(pcont=best_sol)
+                f.append(fitness)
         r.append(np.mean(f))
     data[key] = r
 

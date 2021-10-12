@@ -6,14 +6,14 @@ RUN: run status: enemy: 1; fitness: 3.950143992750463; player life: 0; enemy lif
 
 RUN: run status: enemy: 2; fitness: 88.65482255552044; player life: 42; enemy life: 0; time: 256
 
-RUN: run status: enemy: 3; fitness: 21.648141866523932; player life: 0; enemy life: 70.0; time: 211
+RUN: run status: enemy: 3; fitness: 30.638707834290575; player life: 0; enemy life: 60.0; time: 213
 
-RUN: run status: enemy: 4; fitness: 30.691732302598794; player life: 0; enemy life: 60.0; time: 202
+RUN: run status: enemy: 4; fitness: 21.648141866523932; player life: 0; enemy life: 70.0; time: 211
 
-RUN: run status: enemy: 5; fitness: 86.27353194306673; player life: 21.40000000000024; enemy life: 0; time: 353
+RUN: run status: enemy: 5; fitness: 29.926955465899596; player life: 0; enemy life: 60.0; time: 434
 
-RUN: run status: enemy: 6; fitness: 13.569183201156687; player life: 0; enemy life: 80.0; time: 84
+RUN: run status: enemy: 6; fitness: 30.531939858864867; player life: 0; enemy life: 60.0; time: 237
 
-RUN: run status: enemy: 7; fitness: 30.59282822853988; player life: 0; enemy life: 60.0; time: 223
+RUN: run status: enemy: 7; fitness: 66.04675666571221; player life: 0; enemy life: 20.0; time: 385
 
 RUN: run status: enemy: 8; fitness: 86.12628484395722; player life: 21.40000000000024; enemy life: 0; time: 409
