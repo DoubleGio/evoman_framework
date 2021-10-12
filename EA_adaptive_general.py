@@ -28,7 +28,7 @@ if HEADLESS:
 
 
 def main():
-    n_runs = 3
+    n_runs = 10
     run_mode = 'train'
     enemies = [2, 4, 6, 8]
     # enemies = [1, 3, 5, 7]

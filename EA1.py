@@ -1,6 +1,6 @@
-## EA1
-## VU - Evolutionary Algorithms - team 49
-## September 2021
+# EA1
+# VU - Evolutionary Algorithms - team 49
+# September 2021
 
 import sys
 

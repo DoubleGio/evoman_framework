@@ -151,7 +151,7 @@ class Environment(object):
 
 
         # method for updating solutions bkp in simulation
-    def update_solutions(self, solutions):
+    def solutions(self, solutions):
         self.solutions = solutions
 
 
