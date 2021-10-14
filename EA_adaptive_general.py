@@ -99,7 +99,7 @@ def train(env, experiment_name, run):
         children = crossover(pop, fit_pop, n_vars, sigma)
         fit_children = evaluate(env, children)
 
-        # 1/5 rule thingy
+        # Implementation of Rechenberg’s 1/5 success rule
         if gen_i % 2 == 0:
             best = fit_pop.max()
             x = np.where(fit_children > best, True, False)
@@ -177,7 +177,7 @@ def evaluate(env, x):
 # Tournament selection
 def parent_selection(pop, fit_pop, sigma, n_parents=3):
     parents = np.zeros((n_parents, pop.shape[1]))
-    percentage = (10 + (1 - sigma) * 40) / 100
+    percentage = (10 + (1 - sigma) * 40) / 100  # Controlling tournament size using sigma
     tournament_size = max(5, np.floor(pop.shape[0] * percentage))  # Tournament size = max(5, 10-50% of pop)
     for i in range(0, n_parents):
         i_options = np.random.randint(0, pop.shape[0], int(tournament_size))  # randomly pick some individuals
@@ -202,7 +202,6 @@ def crossover(pop, fit_pop, n_vars, sigma=1):
             # mutation
             for i in range(0, len(offspring[f])):
                 if np.random.uniform(0, 1) <= MUTATION:
-                    # offspring[f][i] = np.random.uniform(LIM_L, LIM_U)
                     offspring[f][i] = offspring[f][i] + np.random.normal(0, sigma)
             offspring[f] = np.clip(offspring[f], LIM_L, LIM_U)  # Values lower than -1 become -1, higher than 1 become 1
 
