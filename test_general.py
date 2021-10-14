@@ -59,7 +59,7 @@ def main():
                 best_sol = run_best_sol
                 best_results = res_run
         data[key] = gains
-    np.savetxt('best_solution.text', best_sol)
+    np.savetxt('best_solution.txt', best_sol)
     plot(data)
     ttest_odd = stats.ttest_ind(data['EA Det. - Odd'], data['EA Ada. - Odd'])
     ttest_even = stats.ttest_ind(data['EA Det. - Even'], data['EA Ada. - Even'])
