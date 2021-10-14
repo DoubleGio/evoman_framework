@@ -1,0 +1,12 @@
+   Enemy # |   Player life |   Enemy life
+-----------+---------------+--------------
+         1 |          0    |           78
+         2 |         42    |            0
+         3 |          0    |           50
+         4 |          0    |           30
+         5 |         54.88 |            0
+         6 |          2.48 |           26
+         7 |          0    |           28
+         8 |         40.24 |            0
+ TTest Det. vs Ada. algorithm - ODD enemies, p-value = 0.715601180433447
+ TTest Det. vs Ada. algorithm - EVEN enemies, p-value = 0.7487883303607892
