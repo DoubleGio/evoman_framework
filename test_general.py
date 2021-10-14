@@ -1,4 +1,4 @@
-# Creating the boxplots
+# Creating the boxplots and table
 # VU - Evolutionary Algorithms - team 49
 # September 2021
 import sys
