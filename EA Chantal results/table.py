@@ -31,13 +31,13 @@ def custom_cons_multi(values):
 best = []
 data = {'EA Det. - Odd': [], 'EA Det. - Even': [], 'EA Ada. - Odd': [], 'EA Ada. - Even': []}
 for i, key in enumerate(data):
-    r = []
+    best = np.zeros((3, 10))
     for run in range(N_RUNS):
         experiment_loc = f'{FOLDERS[i]}_test{run + 1}'
-        f = []
+        cur = np.zeros((3, 10))
         for repeat in range(N_REPEATS):
-            e = np.zeros((0,2))
-            for enemy in ENEMIES:
+            e = np.zeros((3, 10))
+            for j, enemy in enumerate(ENEMIES):
                 env = Environment(experiment_name=experiment_loc,
                                   enemies=[enemy],
                                   playermode="ai",
@@ -48,8 +48,10 @@ for i, key in enumerate(data):
                                   randomini="yes")
                 best_sol = np.loadtxt(experiment_loc + '/best.txt')
                 print(f'\n{FOLDERS[i]} - RUN {run + 1} - REPEAT {repeat + 1}\n')
-                fitness, player_life, enemy_life, _ = env.play(pcont=best_sol)
-                f.append(fitness)
+                e[0, j], e[1, j], e[2, j], _ = env.play(pcont=best_sol)
+            cur = cur + e
+        avg_cur = cur / N_REPEATS
+        if a[0].sum() > best[].sum()
         r.append(np.mean(f))
     data[key] = r
 
