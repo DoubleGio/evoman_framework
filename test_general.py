@@ -27,11 +27,11 @@ if HEADLESS:
 
 def main():
     best_sol = np.zeros(265)
-    best_gain = -800  # -800 is the worst possible performance (800 is the best)
+    best_gain = -800  # -800 is the worst possible gain (800 is the best)
     best_results = np.zeros((10, 2))
     data = {'EA Det. - Odd': [], 'EA Det. - Even': [], 'EA Ada. - Odd': [], 'EA Ada. - Even': []}
     for i, key in enumerate(data):
-        gains = np.zeros(10)
+        gains = np.zeros(N_RUNS)  # Array containing the gain per run
         for run in range(N_RUNS):
             experiment_loc = f'{FOLDERS[i]}_test{run + 1}'
             run_best_sol = np.loadtxt(experiment_loc + '/best.txt')
@@ -53,7 +53,7 @@ def main():
                 res_run[:, 1] += enemy_life
             res_run = res_run / N_REPEATS  # Average results of all enemies for 1 run
 
-            gains[run] = np.sum(res_run[:, 0]) - np.sum(res_run[:, 1])
+            gains[run] = np.sum(res_run[:, 0]) - np.sum(res_run[:, 1])  # Calculate the gain
             if gains[run] > best_gain:
                 best_gain = gains[run]
                 best_sol = run_best_sol
@@ -91,6 +91,7 @@ def plot(data):
     plt.show()
 
 
+# We are interested in the list of results, so we can process it ourselves
 def custom_cons_multi(values):
     return values
 
